@@ -1,7 +1,7 @@
 # AWS-VPN-BGP CloudFormation Templates
 <table>
     <tr>
-        <th align="left" colspan="2"><h4><a href="https://github.com/kkpkishan/aws-vpn-bgp-cf.git">VPN BGP (Virtual Private Network using Border Gateway Protocol)</a></h4></th>
+        <th align="left" colspan="2"><h4><a href="https://github.com/kkpkishan/aws-vpn-bgp-cloudformation-templates.git">VPN BGP (Virtual Private Network using Border Gateway Protocol)</a></h4></th>
     </tr>
     <tr>
         <td valign="top">
