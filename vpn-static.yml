@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: BGP Site-to-Site VPN Connection by Kishan Khatrani
+Description: "(Not Fully Tested) Static Site-to-Site VPN Connection by Kishan Kahtrani"
 Parameters:
   Owner:
     Description: Enter Team or Individual Name Responsible for the Stack.
@@ -50,14 +50,6 @@ Parameters:
     Default: 192.168.100.0/24
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
     ConstraintDescription: Must be a valid CIDR range of the form x.x.x.x/x.
-  RemoteBgpAsn:
-    Description: Enter Remote VPN Device BGP ASN.
-    Type: String
-    MinLength: '4'
-    MaxLength: '5'
-    Default: '65000'
-    AllowedPattern: "(\\d{4,5})"
-    ConstraintDescription: Must be a valid CIDR range of the form x.x.x.x/x.
   IncludePublicSubnets:
     Description: Select whether to include the Public Subnets in VPN Access or not.
     Type: String
@@ -69,11 +61,11 @@ Parameters:
     Description: Enter Public Network ACL Rule Number to Allow Office Network. (Skip
       if Not Including Public)
     Type: Number
-    Default: '125'
+    Default: '230'
   AllowOfficeNetworktoPrivateRuleNumber:
     Description: Enter Private Network ACL Rule Number to Allow Office Network.
     Type: Number
-    Default: '125'
+    Default: '230'
 Conditions:
   IncludePublic:
     Fn::Equals:
@@ -112,8 +104,7 @@ Resources:
     Type: AWS::EC2::CustomerGateway
     Properties:
       Type: ipsec.1
-      BgpAsn:
-        Ref: RemoteBgpAsn
+      BgpAsn: '65000'
       IpAddress:
         Ref: RemoteVpnDeviceIp
       Tags:
@@ -142,7 +133,7 @@ Resources:
     - VPNGateway
     Properties:
       Type: ipsec.1
-      StaticRoutesOnly: 'false'
+      StaticRoutesOnly: 'true'
       CustomerGatewayId:
         Ref: CustomerGateway
       VpnGatewayId:
@@ -166,29 +157,29 @@ Resources:
           - ''
           - - 'Connection to '
             - Ref: RemoteNetworkCidr
-  VPNGatewayRoutePropagationBoth:
+  PublicRoute:
     Condition: IncludePublic
-    Type: AWS::EC2::VPNGatewayRoutePropagation
     DependsOn:
-    - VPNGateway
     - VPNConnection
+    Type: AWS::EC2::Route
     Properties:
-      RouteTableIds:
-      - Ref: PrivateRouteTable
+      DestinationCidrBlock:
+        Ref: RemoteNetworkCidr
+      GatewayId:
+        Ref: VPNGateway
+      RouteTableId:
       - Ref: PublicRouteTable
-      VpnGatewayId:
-        Ref: VPNGateway
-  VPNGatewayRoutePropagationPrivateOnly:
-    Condition: ExcludePublic
-    Type: AWS::EC2::VPNGatewayRoutePropagation
+  PrivateRoute:
     DependsOn:
-    - VPNGateway
     - VPNConnection
+    Type: AWS::EC2::Route
     Properties:
-      RouteTableIds:
-      - Ref: PrivateRouteTable
-      VpnGatewayId:
+      DestinationCidrBlock:
+        Ref: RemoteNetworkCidr
+      GatewayId:
         Ref: VPNGateway
+      RouteTableId:
+      - Ref: PrivateRouteTable
   InboundPublicNetworkAclEntryOfficeNetwork:
     Condition: IncludePublic
     Type: AWS::EC2::NetworkAclEntry
@@ -312,3 +303,4 @@ Metadata:
         default: Network CIDR Block
       RemoteBgpAsn:
         default: VPN Device BGP ASN
+
